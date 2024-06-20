@@ -1,6 +1,11 @@
 import os
 import json
+import logging
 from utils.parsing import get_meta_cheatsheet
+from __init__ import __version__
+os.system('mkdir C:\\DotaMetaLogs\\')
+logging.basicConfig(level=logging.INFO,
+                    filename=r'C:\DotaMetaLogs\log.log')
 
 def read_json(filename):
     with open(filename, 'r') as f:
@@ -85,22 +90,24 @@ def find_hero_grid_config_path():
             if not os.path.exists(steam_userdata_path):
                 continue
         
-        print(f"Searching for hero_grid_config.json in {steam_userdata_path}")
+        logging.info(f"Searching for hero_grid_config.json in {steam_userdata_path}")
         
         for root, dirs, files in os.walk(steam_userdata_path):
             if 'hero_grid_config.json' in files and '570' in root.split(os.sep):
                 found_path = os.path.join(root, 'hero_grid_config.json')
-                print(f"Found hero_grid_config.json at {found_path}")
+                logging.info(f"Found hero_grid_config.json at {found_path}")
                 return found_path
 
     return None
 
 if __name__ == '__main__':
+    logging.info(f"Running live update script version: {__version__}")
     hero_grid_config_path = find_hero_grid_config_path()
     if hero_grid_config_path:
+        logging.info(f"Found hero_grid_config.json at {hero_grid_config_path}")
         hero_grid_config = read_json(hero_grid_config_path)
         updated_config = add_live_updates_config(hero_grid_config)
         write_json(updated_config, hero_grid_config_path)
-        print(f"Hero IDs added to {hero_grid_config_path} under 'Live Updates'")
+        logging.info(f"Hero IDs added to {hero_grid_config_path} under 'Live Updates'")
     else:
-        print("Could not find hero_grid_config.json on any drive")
+        logging.error("Could not find hero_grid_config.json on any drive")
