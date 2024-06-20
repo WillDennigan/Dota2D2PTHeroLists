@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import winreg
 from utils.parsing import get_meta_cheatsheet
 from __init__ import __version__
 os.system('mkdir C:\\DotaMetaLogs\\')
@@ -80,24 +81,25 @@ def add_live_updates_config(json_data):
 
 def find_hero_grid_config_path():
     '''
-    Searches for hero_grid_config.json in all drives for a Windows installation of Steam
+    Searches for hero_grid_config.json in Steam Install Path
     '''
-    drives = ['C:', 'D:', 'E:', 'F:', 'G:', 'H:', 'I:', 'J:', 'K:', 'L:', 'M:', 'N:', 'O:', 'P:', 'Q:', 'R:', 'S:', 'T:', 'U:', 'V:', 'W:', 'X:', 'Y:', 'Z:']
-    for drive in drives:
-        steam_userdata_path = os.path.join(drive, 'Program Files (x86)', 'Steam', 'userdata')
-        if not os.path.exists(steam_userdata_path):
-            steam_userdata_path = os.path.join(drive, 'Steam', 'userdata')
-            if not os.path.exists(steam_userdata_path):
-                continue
-        
-        logging.info(f"Searching for hero_grid_config.json in {steam_userdata_path}")
-        
-        for root, dirs, files in os.walk(steam_userdata_path):
-            if 'hero_grid_config.json' in files and '570' in root.split(os.sep):
-                found_path = os.path.join(root, 'hero_grid_config.json')
-                logging.info(f"Found hero_grid_config.json at {found_path}")
-                return found_path
+    registry_key = winreg.OpenKey(
+        winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam"
+    )
+    install_path, reg_type = winreg.QueryValueEx(registry_key, "InstallPath")
+    winreg.CloseKey(registry_key)
 
+    steam_userdata_path = os.path.join(install_path, "userdata")
+    if not os.path.exists(steam_userdata_path):
+        return None
+
+    logging.info(f"Searching for hero_grid_config.json in {steam_userdata_path}")
+    
+    for root, dirs, files in os.walk(steam_userdata_path):
+        if 'hero_grid_config.json' in files and '570' in root.split(os.sep):
+            found_path = os.path.join(root, 'hero_grid_config.json')
+            logging.info(f"Found hero_grid_config.json at {found_path}")
+            return found_path
     return None
 
 if __name__ == '__main__':
@@ -110,4 +112,4 @@ if __name__ == '__main__':
         write_json(updated_config, hero_grid_config_path)
         logging.info(f"Hero IDs added to {hero_grid_config_path} under 'Live Updates'")
     else:
-        logging.error("Could not find hero_grid_config.json on any drive")
+        logging.error("Could not find hero_grid_config.json")
