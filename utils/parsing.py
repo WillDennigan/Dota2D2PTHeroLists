@@ -1,5 +1,9 @@
 import os
-import requests
+try:
+    import requests
+except:
+    os.system('pip install requests')
+    import requests
 try:
     from bs4 import BeautifulSoup
 except:
