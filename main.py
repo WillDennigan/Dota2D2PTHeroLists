@@ -18,7 +18,8 @@ if operatingsystem == "Linux":
     else:
         base = os.path.expandvars("$XDG_STATE_HOME")
     logpath = base + "/dotametalogs/"
-os.mkdir(logpath)
+if not os.path.exists(logpath):
+    os.makedirs(logpath)
 logfile = logpath + "log.log"
 
 logging.basicConfig(level=logging.INFO, filename=logfile)
