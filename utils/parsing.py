@@ -1,14 +1,20 @@
 import os
+
+# Install dependencies if missing
 try:
-    import requests
-except:
-    os.system('pip install requests')
-    import requests
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    os.system('pip install playwright')
+    from playwright.sync_api import sync_playwright
+    os.system('python -m playwright install')
+
 try:
     from bs4 import BeautifulSoup
-except:
+except ImportError:
     os.system('pip install beautifulsoup4')
     from bs4 import BeautifulSoup
+
+import requests
 
 def parse_cheatsheet(html):
     '''
@@ -44,13 +50,16 @@ def find_hero_id(heroes):
 
 def get_meta_cheatsheet(position):
     '''
-    Returns a list of hero IDs for the given position using D2PT cheatsheet
+    Uses Playwright to scrape rendered HTML from D2PT and returns hero IDs for the position
     '''
-    url = f"https://dota2protracker.com/cheatsheets/{position}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        heroes = parse_cheatsheet(response.text)
-        ids = find_hero_id(heroes)
-        return ids
-    else:
-        return None
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        url = f"https://dota2protracker.com/cheatsheets/{position}"
+        page.goto(url, wait_until="networkidle")
+        html = page.content()
+        browser.close()
+
+    heroes = parse_cheatsheet(html)
+    ids = find_hero_id(heroes)
+    return ids
